@@ -1,4 +1,4 @@
-version: '3'
+version: '3.5'
 
 services:
     risks: &base_app
@@ -18,6 +18,8 @@ services:
             - mongo
             - tenders-crawler
             - contracts-crawler
+        networks:
+            - risks-net
 
     tenders-crawler:
         image: "${IMAGE}"
@@ -34,6 +36,10 @@ services:
         command: python -m prozorro.risks.crawlers.tenders_crawler
         volumes:
             - ./src/prozorro:/app/prozorro
+        depends_on:
+            - mongo
+        networks:
+            - risks-net
 
     contracts-crawler:
         image: "${IMAGE}"
@@ -51,6 +57,10 @@ services:
         command: python -m prozorro.risks.crawlers.contracts_crawler
         volumes:
             - ./src/prozorro:/app/prozorro
+        depends_on:
+            - mongo
+        networks:
+            - risks-net
 
     mongo:
         image: 'bitnami/mongodb:4.4.3'
@@ -62,11 +72,15 @@ services:
             MONGODB_REPLICA_SET_KEY: replicaSetKey
         ports:
             - 27017:27017
+        networks:
+            - risks-net
 
     frontend:
         image: "${IMAGE_FRONTEND}"
         ports:
             - 9090:80
+        networks:
+            - risks-net
 
     risks-test-integration: &test_app
         <<: *base_app
@@ -79,3 +93,9 @@ services:
             - ./tests:/prozorro/tests
             - ./swagger:/swagger
             - ./pytest.ini:/app/pytest.ini
+        networks:
+            - risks-net
+
+networks:
+  risks-net:
+    driver: bridge
